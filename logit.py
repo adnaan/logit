@@ -2,16 +2,13 @@
 """
 Simple module to send log messages to remote host
 """
-import os.path
+
 import logging
-import traceback
 import requests
-import collections
 import jsonpickle
 import uuid
-
-
 from logging import DEBUG, WARNING, ERROR
+
 """
 Log Payload
 """
