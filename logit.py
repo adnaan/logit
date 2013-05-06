@@ -12,7 +12,9 @@ import uuid
 
 
 from logging import DEBUG, WARNING, ERROR
-
+"""
+Log Payload
+"""
 class Payload(object):
     def __init__(self, uuid):
         self.uuid = uuid
