@@ -28,6 +28,6 @@ log.error("this is an error")
 
 A posted json from logit looks like this:
 
-{"message": "this is a debug message", "tag": "new tag", "uuid": "BirfYraTEeKRbQAXfAvHxg", "level": "debug"}
+{"message": "this is a debug message", "tag": "new tag", "uuid": "CirfYraXEeKDrtRbUXfAdHxg", "level": "debug"}
 
 
