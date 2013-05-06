@@ -25,33 +25,19 @@ class Payload(object):
 
 class Logit(object):
     """
-  Logging wrapper
+    Logging wrapper
     """
     def __init__(self, tag):
         self.tag = tag
 
-    show_path = True
-
    
-    def log(self, logfn, message, exc_info):
-        cname = ''
-        location = ''
-        fn = ''
-        tb = traceback.extract_stack()
-        if len(tb) > 2:
-            if self.show_path:
-                loc = '(%s:%d):' % (os.path.basename(tb[-3][0]), tb[-3][1])
-            fn = tb[-3][2]
-            if fn != '<module>':
-                if self.__class__.__name__ != Logit.__name__:
-                    fn = self.__class__.__name__ + '.' + fn
-                fn += '()'
-
+    def log(self, logfunc, message, exc_info):
+        
         """
         Calls the actual logger function
 
         """
-        logfn(location + cname + fn + ': ' + message, exc_info=exc_info)
+        logfunc(self.tag + ': ' + message, exc_info=exc_info)
 
 
         """
@@ -64,7 +50,7 @@ class Logit(object):
         """
         payload=Payload(id)
         payload.tag=self.tag
-        payload.level=logfn.__name__
+        payload.level=logfunc.__name__
         payload.message=message
 
         """
