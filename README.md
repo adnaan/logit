@@ -15,7 +15,7 @@ Dependencies
 Usage
 =====
 
-Modify `endpoint` in `logit.py` to put in your host url.
+Modify `endpoint` in `logit.Logit` to put in your host url.
 
 ```
 from logit import Logit
