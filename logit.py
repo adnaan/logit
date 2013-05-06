@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-Simple module to save log messages to remote host
+Simple module to send log messages to remote host
 """
 import os.path
 import logging
@@ -53,7 +53,7 @@ class Logit(object):
 
 
         """
-        create payload 
+        create payload with uuid signature
         """
         id=uuid.uuid1().bytes.encode('base64').rstrip('=\n').replace('/', '_')
 
@@ -66,20 +66,20 @@ class Logit(object):
         payload.message=message
 
         """
-        generate headers
+        generate headers. add authentication headers here.
 
         """
         headers = {'content-type': 'application/json'}
 
 
         """
-        endpoint
+        endpoint: EDIT THIS!
         """
 
         endpoint = 'http://localhost:8085/client'
 
         """
-        save it
+        post it
         """
 
         requests.post(endpoint, data=jsonpickle.encode(payload, unpicklable=False), headers=headers)
