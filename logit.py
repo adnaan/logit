@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-Simple module to save log messages to remote server
+Simple module to save log messages to remote host
 """
 import os.path
 import logging
