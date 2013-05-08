@@ -27,15 +27,16 @@ Config
 
 `endpoint` : remote host url
 `headers`: http request headers
-`cacheEnabled` : if `True` all logs are saved to filesytem before uploading
-`maxSize`: Maximum size of an App log payload before it's uploaded or cached(on `cacheEnabled` or remote host failure)
+`cacheEnabled` : if `True` all logs are saved to filesytem before uploading.
+`cacheArchive`: If `True` archive log files in local else delete after uploading. 
+`maxSize`: Maximum size of an Project log payload before it's uploaded or cached(on `cacheEnabled` or remote host failure)
 `cachedFilesPath`: log directory path. ensure permission.
 `cachedFileExtensionSuffix`: log file extension
 
 Usage
 =====
 
-Modify `endpoint` in `logit.py` to put in your host url.
+See `example.py`
 
 ```
 from logit import Logit
@@ -48,10 +49,6 @@ log.debug("my-tag", "this is is a debug message")
 log.warning("my-tag","this is a warning")
 log.error("my-tag","this is an error")
 ```
-
-A posted json from logit looks like this:
-
-{"message": "this is a debug message", "tag": "new tag", "uuid": "CirfYraXEeKDrtRbUXfAdHxg", "level": "debug"}
 
 
 TODOS

@@ -3,10 +3,10 @@ import time
 
 def main():
 	log = Logit("my-project-tag","my-app-tag-A")
-	for i in range(0,1000):
-		log.debug("my-tag-A", "this is is a debug message this is is a debug message ")
+	for i in range(0,100):
+		log.debug("my-tag-A", 'this is is a debug message:%d'%i)
 
-	print("logged data A...")
+	#log.values()
 
 	try:
 		while True:

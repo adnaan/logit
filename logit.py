@@ -8,9 +8,13 @@ import time
 import sys
 import logging
 import requests
+import types
 import jsonpickle
 import uuid
 import json
+import shutil
+from datetime import datetime
+import calendar
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from logging import DEBUG, WARNING, ERROR
@@ -24,7 +28,11 @@ except ImportError:
 
 
 
-
+def getUnixTimeStamp():
+    """
+    Returns current unix time stamp
+    """
+    return calendar.timegm(datetime.utcnow().utctimetuple())
 
 ## {{{ http://code.activestate.com/recipes/577504/ (r3)
 ## http://opensource.org/licenses/mit-license.php
@@ -77,16 +85,18 @@ def total_size(o, handlers={}, verbose=False):
 headers = {'content-type': 'application/json'}
 #endpoint: EDIT THIS!
 endpoint = 'http://localhost:8085/client'
-#kilobytes
-maxSize=512
-maxCount=100
+#KB
+maxSize=20
 cachedFilesPath='logit/'
+cachedArchivePath= 'logit-archive/'
 cachedFileExtensionSuffix='.log'
 #if cacheEnabled all logs are cached before uploading
 cacheEnabled=True
+cacheArhive=True
 #maxAge
 #cache
-count = 0
+
+
 
 class Singleton(type):
     """
@@ -115,11 +125,8 @@ class Node(object):
        
 
     def add_child(self, key, child):
-        global count
-        self._children[key]=child
-        for k,v in self._children.iteritems():
-            count+=len(v._children)
-        print("count: ", count)
+       self._children[key]=child
+        
 
     def remove_child(self,key):
         self._children.pop(key)
@@ -179,6 +186,7 @@ class Payload(Node):
 class Logit(Node,FileSystemEventHandler):
     """
     Logging wrapper
+    is a project instance
     project_tag:project level tag
     app_tag:app level tag
     """
@@ -191,10 +199,13 @@ class Logit(Node,FileSystemEventHandler):
 
         print(project_tag,app_tag)
        
-
+        #create log and archive directories
         if not os.path.exists(cachedFilesPath):
             os.makedirs(cachedFilesPath)
-        #setup change event handler
+        if not os.path.exists(cachedArchivePath):
+            os.makedirs(cachedArchivePath)
+
+        #setup directory change event handler
         event_handler = self
         self.observer = Observer()
         self.observer.schedule(event_handler, '.', recursive=True)
@@ -202,10 +213,10 @@ class Logit(Node,FileSystemEventHandler):
         
     def on_any_event(self, event):
         "If any file or folder is changed"
-        print ("changed !")
-        self.monitorCache()
+        #print ("changed !")
+        self.updateCache()
 
-    def monitorCache(self):
+    def updateCache(self):
         """
         Looks for .log files. uploads them. on upload success, deletes them.
         """
@@ -217,30 +228,46 @@ class Logit(Node,FileSystemEventHandler):
                         payload_json = f.read()
                         payload_obj=jsonpickle.decode(payload_json)
                         r= self.upload(payload_obj)
-                        if r.status_code == 200 :
-                            #uploaded! delete file.
-                            os.remove(path)
+                        if isinstance(r, types.NoneType):
+                            #do nothing
+                            print("")
+                        else:
+                            if r.status_code == 200 :
+                            #uploaded!
+                                if cacheArhive:
+                                    #move it to archive
+                                    dst=os.getcwd()+'/'+cachedArchivePath+file
+                                    shutil.move(path, dst)
+                                    print("archived log: ", file)
+                                else:
+                                    #delete it
+                                    os.remove(path)
 
-    def upload(self,appPayload):
+    def upload(self,projectPayload):
         """
         Uploads app payload to remote host
         """
-        encodedPayload = jsonpickle.encode(appPayload, unpicklable=False)
+        encodedPayload = jsonpickle.encode(projectPayload, unpicklable=False)
 
-        print("uploading log")
-        r=requests.post(endpoint, data=encodedPayload, headers=headers)
-        
-        if r.status_code != 200 :
+        print("uploading log...",self.project_tag)
+        try:
+            r=requests.post(endpoint, data=encodedPayload, headers=headers)
+
+            if r.status_code != 200 :
             #couldn't save to remote so cache to file
-            print ("error! " , r.status_code)
+                print ("error! " , r.status_code)
+            return r
 
-        return r
+        except requests.ConnectionError as e:
+            print ('ConnectionError error',e)
 
-    def cachePayload(self,app_tag, encodedPayload):
+
+        
+    def cachePayload(self,encodedPayload):
         """
         Cache app payload on remote host failure or on cacheEnabled
         """
-        filename = cachedFilesPath + str(app_tag) + cachedFileExtensionSuffix
+        filename = cachedFilesPath + str(self.project_tag) + ('_%d'%getUnixTimeStamp()) + cachedFileExtensionSuffix
         #print(filename)
 
         with open(filename, mode='w') as f:
@@ -275,6 +302,15 @@ class Logit(Node,FileSystemEventHandler):
         Logging to remote host is now stopped
         """
         self.observer.stop()
+    def values(self):
+        """
+        Print all children
+        """
+        global count
+        for k,v in self._children.items():
+            for ik,jv in v._children.items():
+                count+=1
+                print (count,ik,jv)
 
     def setProjectTag(self,project_tag):
         self.project_tag=project_tag
@@ -311,42 +347,38 @@ class Logit(Node,FileSystemEventHandler):
         if self.app_tag in self._children:
             #append to existing app payload
             #print ('append to existing app payload')    
-            self._children[self.app_tag].add_child(tag,payload)
+            self._children[self.app_tag].add_child(id,payload)
             
         else:
             #create new AppPayload
             #print ('create new AppPayload')
             app_payload=AppPayload(self.project_tag,self.app_tag)
-            app_payload.add_child(tag,payload)
+            app_payload.add_child(id,payload)
             self.add_child(self.app_tag,app_payload)
 
-        
 
-        #check log maxSize per app. if oversize, upload or cache it and remove from logit
-       
-        currSize = total_size(self._children,verbose=False)
-        #print("size: ",currSize)
-        if currSize > maxSize:
-            print("overflow")
-            print("size: ",currSize)
-           
-            for k, v in self._children.items():
-                if cacheEnabled:
-                #cache it
-                    encodedPayload = jsonpickle.encode(v, unpicklable=False)
-                    self.cachePayload(k,encodedPayload)
-                    self.remove_child(k)
-                else:    
+
+        #project root
+        p_size = 0
+        for k,v in self._children.items():
+            #app root
+            appPayloadSize = total_size(v._children,verbose=False)/1024
+            p_size+=appPayloadSize
+
+        if p_size > maxSize:
+            if cacheEnabled:
+                 encodedPayload = jsonpickle.encode(self._children, unpicklable=False)
+                 self.cachePayload(encodedPayload)
+                 self._children.clear()
+            else:
                 #upload it
-                    r=self.upload(v)
+                    r=self.upload(self._children)
                     if r.status_code == 200 :
-                        self.remove_child(k)
+                       self._children.clear()
+
 
 
         
-
-
-     
     def debug(self, tag, message, exc_info=False):
         """
         Log a debug-level message. 
