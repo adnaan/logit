@@ -2,8 +2,6 @@ logit
 =====
 
 
-Simple python module to send log messages in JSON format to remote host. This module is in active development. See branch->exp for latest changes.
-=======
 Simple python module to send log messages in JSON format to remote host. It wraps the `logging` package, therefore normal logging operation is not interuppted. Project, App and User-Defined tags are available. It uses the `watchdog` library to observe directory changes and upload log files automatically. This library is in active development. Observe caution while using.
 
 Features
