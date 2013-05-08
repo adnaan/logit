@@ -27,13 +27,21 @@ Dependencies
 Config
 =====
 
-`endpoint` : remote host url
-`headers`: http request headers
+`endpoint` : remote host url.
+
+`headers`: http request headers.
+
 `cacheEnabled` : if `True` all logs are saved to filesytem before uploading.
+
 `cacheArchive`: If `True` archive log files in local else delete after uploading. 
-`maxSize`: Maximum size of an Project log payload before it's uploaded or cached(on `cacheEnabled` or remote host failure)
+
+`maxSize`: Maximum size of a Project log payload before it's uploaded or cached(on `cacheEnabled` or remote host failure).
+
 `cachedFilesPath`: log directory path. ensure permission.
-`cachedFileExtensionSuffix`: log file extension
+
+`cachedArchivePath`: log archive directory.
+
+`cachedFileExtensionSuffix`: log file extension.
 
 Usage
 =====
