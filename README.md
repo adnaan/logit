@@ -1,7 +1,7 @@
 logit
 =====
 
-Simple python module to send log messages in JSON format to remote host.
+Simple python module to send log messages in JSON format to remote host. This module is in active development. See branch->exp for latest changes.
 
 Dependencies
 ===========
